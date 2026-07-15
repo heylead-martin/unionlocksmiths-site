@@ -189,3 +189,7 @@ code{background:var(--soft-2);padding:.1em .4em;border-radius:4px;font-size:.86e
 
 /* people photos: crop from the top so faces stay in frame */
 .photo img[src*="loc-working"],.photo img[src*="loc-portrait"],.photo img[src*="man-car"]{object-position:center top}
+
+/* email link in the dark Get In Touch band */
+.cta-mail{margin:14px 0 0;color:#cfd3d8;font-size:.95rem}
+.cta-mail a{color:var(--gold);font-weight:700}
