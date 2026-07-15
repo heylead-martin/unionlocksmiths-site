@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://unionlocksmiths.sg/sitemap.xml
