@@ -94,6 +94,13 @@ code{background:var(--soft-2);padding:.1em .4em;border-radius:4px;font-size:.86e
 .photo.portrait{max-width:330px;margin:1.5rem auto}
 .photo.portrait img{aspect-ratio:auto;max-height:none}
 .fineprint{font-size:.86rem;color:var(--muted);font-style:italic}
+/* caption strip under a photo, sits inside the figure's rounded card */
+.photo figcaption{padding:10px 14px;text-wrap:balance;background:var(--soft);border-top:1px solid var(--line);
+  font-size:.84rem;line-height:1.45;color:var(--muted);text-align:center}
+/* opening paragraph of a prose page, set slightly larger to lead the eye in */
+.content .lead{font-size:1.09rem;color:#3f3f3f}
+/* closing line of a prose page */
+.content .closer{font-weight:700;color:var(--ink)}
 .foot-call{color:var(--gold);font-weight:700}
 
 /* recovered-photo placeholders (kept for any image without a curated replacement) */
