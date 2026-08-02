@@ -381,13 +381,24 @@ Add to the Vodien zone as part of step 4:
 
 Do this before the address goes live, not after the first lost enquiry.
 
-### 6. Redirect wahluen.sg
+### 6. Redirect wahluen.sg - DEFERRED
 
-Separate zone, so a **separate rule** - the step 5 expression does not match it.
-Same dynamic target, same 301, same preserve-query-string.
+**Descoped 02 Aug 2026 by Martin.** Not part of this cutover. Nothing below
+blocks on it and it can be picked up later without redoing any other step.
 
-If the domain turns out not to be registered, register it before publicising
-the name anywhere. See the open question below.
+When it is picked up: separate zone means a **separate rule** - the step 5
+expression does not match `wahluen.sg`. Same dynamic target, same 301, same
+preserve-query-string. Check first whether the domain is registered at all; it
+returned no DNS on 02 Aug 2026.
+
+Kenneth has told at least one person that `wahluen.sg` will redirect to the new
+site. Until this step is done, it will not. Worth telling him it is deferred
+rather than leaving him to assume it works.
+
+`verify-redirects.sh` still tests all four hosts, so it will report FAIL on the
+two `wahluen.sg` rows until this is done. Expected - do not treat those two as
+a launch blocker, but do not let them mask a real failure on the other rows
+either.
 
 ### 7. Verify before telling Google
 
