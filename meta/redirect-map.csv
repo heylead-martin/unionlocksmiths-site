@@ -1,0 +1,14 @@
+old_url,new_url,page,notes
+https://unionlocksmiths.sg/,https://wahluenlocksmiths.sg/,Home,Brand copy rewrite needed in hero and intro
+https://unionlocksmiths.sg/about/,https://wahluenlocksmiths.sg/about/,About Us,Check for "Union spirit" phrasing
+https://unionlocksmiths.sg/our-history/,https://wahluenlocksmiths.sg/our-history/,Our History,FULL REWRITE REQUIRED - see our-history-rewrite.md
+https://unionlocksmiths.sg/services/,https://wahluenlocksmiths.sg/services/,Services,Mostly mechanical replace
+https://unionlocksmiths.sg/digital-locks/,https://wahluenlocksmiths.sg/digital-locks/,Digital Locks,Mostly mechanical replace
+https://unionlocksmiths.sg/rates/,https://wahluenlocksmiths.sg/rates/,Rates,Mostly mechanical replace
+https://unionlocksmiths.sg/contact/,https://wahluenlocksmiths.sg/contact/,Contact Us,Email address change - admin@ needs new mailbox live first
+https://unionlocksmiths.sg/assets/union-logo.png,https://wahluenlocksmiths.sg/assets/wahluen-logo.png,Asset,Filename change - needs explicit redirect row
+https://unionlocksmiths.sg/assets/loc-working.jpg,https://wahluenlocksmiths.sg/assets/loc-working.jpg,Asset,No rename needed
+https://unionlocksmiths.sg/assets/digital-lock.jpg,https://wahluenlocksmiths.sg/assets/digital-lock.jpg,Asset,No rename needed
+https://unionlocksmiths.sg/assets/safe.jpg,https://wahluenlocksmiths.sg/assets/safe.jpg,Asset,No rename needed
+https://unionlocksmiths.sg/assets/founder.jpg,https://wahluenlocksmiths.sg/assets/founder.jpg,Asset,Kew Chan portrait - keep, central to new story
+https://wahluen.sg/,https://wahluenlocksmiths.sg/,Domain,Third domain confirmed by Kenneth 02 Aug 2026 - needs its own Cloudflare zone rule, not covered by the unionlocksmiths.sg rule

@@ -1,4 +1,4 @@
-/* Union Locksmiths - styling rebuilt to match the original site (owner-supplied photo):
+/* Wah Luen Locksmiths - styling rebuilt to match the original site (owner-supplied photo):
    yellow header band, dark navigation bar, light body. Original theme CSS was not
    archived; all page TEXT is verbatim from the Wayback Machine. */
 
@@ -36,7 +36,11 @@ code{background:var(--soft-2);padding:.1em .4em;border-radius:4px;font-size:.86e
 .logo-fallback{align-items:center;gap:13px}
 .emblem{height:54px;width:auto;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15))}
 .wordmark{display:flex;flex-direction:column;line-height:.92}
-.wordmark b{font-family:inherit;font-weight:900;font-size:1.9rem;letter-spacing:.02em;color:var(--ink)}
+/* "WAH LUEN" is two words and ~17% wider than "UNION" was at the old 1.9rem,
+   which pushed it past LOCKSMITHS and broke the stacked lockup. 1.6rem brings
+   the two lines back to matching width; nowrap stops it splitting on narrow
+   viewports, where a wrapped "WAH / LUEN" would collide with the emblem. */
+.wordmark b{font-family:inherit;font-weight:900;font-size:1.6rem;letter-spacing:.02em;color:var(--ink);white-space:nowrap}
 .wordmark i{font-style:normal;font-weight:700;font-size:.72rem;letter-spacing:.46em;color:var(--ink);padding-left:.1em;margin-top:2px}
 .head-call{display:flex;gap:9px;margin-left:auto}
 .navtoggle{display:none;background:none;border:0;color:#111;font-size:1.7rem;cursor:pointer;line-height:1}
@@ -186,6 +190,13 @@ code{background:var(--soft-2);padding:.1em .4em;border-radius:4px;font-size:.86e
   .hero-cta,.cta-band .cta-btns{gap:10px}
   .hero-cta .btn-call,.hero-cta .btn-ghost,.cta-band .btn-call{flex:1 1 100%;width:100%;justify-content:center}
 }
+
+/* Traditional Chinese in body copy. The Latin stack above has no CJK
+   coverage, so 華聯 would fall back to whatever the OS picks and render
+   at a different weight and baseline than the surrounding text. Match
+   the platform CJK faces explicitly and nudge the size, since CJK
+   glyphs read small at the same pt size as Latin. */
+:lang(zh-Hant){font-family:"PingFang TC","Hiragino Sans CNS","Microsoft JhengHei","Noto Sans TC","Noto Sans CJK TC",sans-serif;font-size:1.05em;letter-spacing:.02em}
 
 /* people photos: crop from the top so faces stay in frame */
 .photo img[src*="loc-working"],.photo img[src*="loc-portrait"],.photo img[src*="man-car"]{object-position:center top}
