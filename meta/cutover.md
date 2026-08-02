@@ -364,10 +364,15 @@ on both domains.
 
 ### 5a. Do not touch the email records on this zone
 
-The zone carries `_dmarc` (`v=DMARC1; p=reject`) and a `*._domainkey` DKIM
+**Corrected 02 Aug 2026 - the premise below was wrong. See "Email: the actual
+position" at the end of this file.** There is no MX record on this zone and
+`admin@unionlocksmiths.sg` does not receive mail. The guidance to leave the TXT
+records alone still stands; the reasoning about the mailbox does not.
+
+~~The zone carries `_dmarc` (`v=DMARC1; p=reject`) and a `*._domainkey` DKIM
 record, plus three more records below the fold in the console - almost certainly
 MX and SPF. These are what make `admin@unionlocksmiths.sg` work, and §3 requires
-that address to keep receiving for twelve months after cutover.
+that address to keep receiving for twelve months after cutover.~~
 
 Proxying is an HTTP-layer feature and applies only to A, AAAA and CNAME records.
 **MX and TXT records are unaffected by the orange cloud**, so step 5 does not put
@@ -468,3 +473,65 @@ site if `main` still has Union content, which after step 2 it does not. Real
 rollback is `git revert` of the rebrand merge plus reverting `CNAME`, then
 waiting on a fresh certificate. Treat step 2 as the point of no easy return and
 make sure steps 1, 3 and 4 are genuinely green before taking it.
+
+---
+
+# Email: the actual position
+
+Established 02 Aug 2026 from the full Cloudflare record list. **This corrects
+§3, §4 and §5a of this file, which all assumed the old mailbox worked.**
+
+## unionlocksmiths.sg does not receive email
+
+The zone has ten records. All of them are visible and **none is an MX record.**
+
+| Record | Value | Effect |
+|---|---|---|
+| SPF | `v=spf1 -all` | no host is authorised to send as this domain |
+| DKIM | `v=DKIM1; p=` | null key, signing disabled |
+| DMARC | `p=reject` | fail closed on anything that does not pass |
+| MX | *absent* | no destination for inbound mail |
+
+That combination is the standard "this domain neither sends nor receives mail"
+lockdown. With no MX, senders fall back to the domain's A record under RFC 5321,
+which is GitHub Pages - now Cloudflare - and neither speaks SMTP. Mail to
+`admin@unionlocksmiths.sg` bounces, and has been bouncing.
+
+## What this invalidates
+
+- **§3 pre-flight**: *"admin@unionlocksmiths.sg is published on two pages ...
+  forward the old address for twelve months. Enquiries will keep arriving at
+  the old one."* No enquiries have been arriving. There is nothing to forward,
+  and forwarding cannot be configured without first creating a mailbox that has
+  never existed.
+- **§2 step 2 and §4**: the old address was never a fallback. It offered no
+  safety net during cutover.
+- **§5a**: the mail-routing caution was based on records that are not there.
+  Leave the TXT records alone regardless - they are a legitimate anti-spoofing
+  posture for a domain that sends no mail, and deleting them would make the
+  domain spoofable.
+
+## What this means in practice
+
+Both `admin@unionlocksmiths.sg` and `admin@wahluenlocksmiths.sg` are dead. The
+site has **no working email channel on either domain**, and did not have one
+before the rebrand either. Phone is the only route in, and always was.
+
+This lowers the urgency of the mailbox as a *migration* task - nothing is being
+lost that was not already being lost - and raises it as a *business* one.
+
+## The question for Kenneth
+
+There is a `zoho-verification=zb9904562...` TXT on the zone, so Zoho Mail was
+started at some point and either abandoned or never completed. Ask him directly:
+
+1. Where do email enquiries actually reach him today? A personal address, a
+   Gmail account, or nowhere?
+2. Was `admin@unionlocksmiths.sg` ever live? If it was, mail stopped at whatever
+   point the MX records came off, and nobody noticed.
+3. Does he want `admin@wahluenlocksmiths.sg` to be real, or should the site drop
+   the email CTA and lead with phone only?
+
+Question 2 is worth asking carefully. A locksmith site publishing a bouncing
+email address is losing enquiries silently, and the business may have no idea
+how long that has been true.
