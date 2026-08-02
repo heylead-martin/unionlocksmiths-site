@@ -123,3 +123,156 @@ name and the 華聯 / Wah Luen reading together. The caveat in
   fails to load. This must be replaced before launch.
 - **`admin@wahluenlocksmiths.sg` now appears on all seven pages**, not the two
   §4 predicted. The mailbox must exist and receive before deploy (§2 step 2).
+
+---
+
+# DNS and redirect runbook
+
+**This section supersedes §1 and §2 above.** Those were written assuming
+Cloudflare already sat in front of `unionlocksmiths.sg`. DNS lookups on
+02 Aug 2026 show it does not. Follow the steps here instead.
+
+Goal, in Kenneth's words: everything moves to `wahluenlocksmiths.sg`, and
+`unionlocksmiths.sg` (plus `wahluen.sg`) 301 to it.
+
+## Observed DNS state, 02 Aug 2026
+
+| Domain | Resolves to | Reading |
+|---|---|---|
+| `unionlocksmiths.sg` | `185.199.108-111.153` | GitHub Pages apex IPs, **direct, not proxied** |
+| `wahluenlocksmiths.sg` | `103.11.189.189` | Registered, but not GitHub Pages |
+| `wahluen.sg` | *no answer* | No DNS records; may not be registered |
+
+Re-check these before starting; they may have moved.
+
+## Two constraints that drive the whole order
+
+**Cloudflare Redirect Rules only fire on proxied traffic.** They run at
+Cloudflare's edge. A DNS-only (grey cloud) record means Cloudflare answers the
+lookup and traffic goes straight to origin, so no rule ever executes.
+`unionlocksmiths.sg` currently returns GitHub's real IPs, so it is either not on
+Cloudflare or is grey-clouded. Either way the §1 rule would not fire today, and
+the "rollback is a single toggle" advantage does not exist until it is proxied.
+
+**A GitHub Pages site answers for exactly one custom domain** - whatever is in
+`CNAME`. Once that file says `wahluenlocksmiths.sg`, Pages no longer recognises
+`unionlocksmiths.sg`. If that domain is still pointed at GitHub's IPs at that
+moment, every old URL returns a **GitHub 404, not a 301**. That is the worst
+outcome available: link equity lost and no path to the new site.
+
+So `unionlocksmiths.sg` must stop pointing at GitHub in the same change that
+starts pointing it at something that redirects. Do not merge to `main` before
+step 5 is staged and ready to enable.
+
+## Steps
+
+Do not reorder. A day or two ahead, drop TTLs on all three zones to 300s so a
+mistake is minutes to undo rather than hours.
+
+### 1. Point wahluenlocksmiths.sg at GitHub Pages
+
+First find out what `103.11.189.189` is - registrar parking, or a live host
+with content on it. Do not repoint until you know what you are switching off.
+
+- apex `@` -> four A records: `185.199.108.153`, `185.199.109.153`,
+  `185.199.110.153`, `185.199.111.153`
+- `www` -> CNAME to `heylead-martin.github.io`
+- optional AAAA: `2606:50c0:8000::153`, `8001::153`, `8002::153`, `8003::153`
+
+If this zone is on Cloudflare, set these **DNS-only / grey cloud** for now.
+See step 3.
+
+### 2. Merge the rebrand branch to main
+
+Pages serves from a branch here - there is no Actions workflow and the default
+branch is `main`. The rebrand is not live until it is on `main`, and the
+`CNAME` file is what tells Pages which host to answer for.
+
+Branch: `claude/union-wah-luen-rebrand-xinrkv`
+
+### 3. Wait for the TLS certificate before proxying anything
+
+The step people trip on. While a record is proxied, GitHub's ACME HTTP-01
+challenge cannot complete, so the certificate is never issued and **Enforce
+HTTPS stays greyed out** in Pages settings.
+
+1. Keep `wahluenlocksmiths.sg` grey-cloud / DNS-only
+2. Repo Settings > Pages, confirm the custom domain shows and the DNS check passes
+3. Wait for the certificate (minutes to about an hour)
+4. Tick **Enforce HTTPS**
+5. Only then, if you want Cloudflare in front, switch to orange cloud with SSL
+   mode **Full (strict)**
+
+Verify apex and www, http and https, and no mixed content.
+
+### 4. Mailbox live before any traffic arrives
+
+`admin@wahluenlocksmiths.sg` is on all seven pages. Send **and** receive a real
+test message. Set `admin@unionlocksmiths.sg` to forward for twelve months -
+enquiries will keep arriving there long after cutover.
+
+### 5. Redirect unionlocksmiths.sg
+
+Only now. The new site must already be verified and serving.
+
+1. Add `unionlocksmiths.sg` to Cloudflare if it is not there, and move the
+   nameservers at the registrar
+2. Set apex and `www` records to **proxied (orange cloud)**. The origin behind
+   them is irrelevant once proxied - the redirect fires at the edge before
+   origin is consulted - but records must exist for the rule to attach to
+3. Remove the GitHub Pages A records, or the domain keeps trying to reach a
+   Pages site that no longer answers for it
+4. Rules > Redirect Rules > Create rule, exactly as §1 above:
+   - expression `(http.host eq "unionlocksmiths.sg") or (http.host eq "www.unionlocksmiths.sg")`
+   - dynamic target `concat("https://wahluenlocksmiths.sg", http.request.uri.path)`
+   - **301**, preserve query string **on**
+
+One rule covers all seven pages and every asset, because the paths are
+identical on both domains.
+
+### 6. Redirect wahluen.sg
+
+Separate zone, so a **separate rule** - the step 5 expression does not match it.
+Same dynamic target, same 301, same preserve-query-string.
+
+If the domain turns out not to be registered, register it before publicising
+the name anywhere. See the open question below.
+
+### 7. Verify before telling Google
+
+    ./meta/verify-redirects.sh
+
+Requires **zero FAIL**. It now tests all four old hosts across both schemes.
+A green run here is the gate for step 8 - not the other way round.
+
+### 8. Search Console and the rest
+
+1. Verify the new property for `wahluenlocksmiths.sg`
+2. Change of Address on the old property, pointing at the new one
+3. Submit `https://wahluenlocksmiths.sg/sitemap.xml`, request indexing on all
+   seven pages
+4. Google Business Profile: business name and website URL
+5. Update the ads account destination URLs before any spend resumes
+6. Tell Kenneth
+
+## Blockers that sit with Kenneth, not with the build
+
+- **`wahluen.sg` has no DNS at all**, which may mean it is not registered.
+  He is describing it publicly as a domain that will redirect. Given this
+  rebrand is trademark-driven, an unregistered domain being associated with the
+  brand is worth settling with the registrar this week, not at cutover.
+- **`unionlocksmiths.sg` auto-renew is OFF, due 26 Sep 2026.** After step 5 the
+  redirects live on that zone. If it lapses, every 301 dies and the domain goes
+  to whoever wants it. Renew for two years **before** cutover.
+- **The logo PNG is still the old Union artwork** under a new filename. See
+  "Still open with Kenneth" above.
+- **Phone number** still unresolved. See §4.
+
+## Rollback
+
+After step 5, rollback is disabling the redirect rule and repointing
+`unionlocksmiths.sg` at the GitHub Pages IPs - but that only restores the old
+site if `main` still has Union content, which after step 2 it does not. Real
+rollback is `git revert` of the rebrand merge plus reverting `CNAME`, then
+waiting on a fresh certificate. Treat step 2 as the point of no easy return and
+make sure steps 1, 3 and 4 are genuinely green before taking it.
