@@ -261,9 +261,13 @@ A green run here is the gate for step 8 - not the other way round.
   He is describing it publicly as a domain that will redirect. Given this
   rebrand is trademark-driven, an unregistered domain being associated with the
   brand is worth settling with the registrar this week, not at cutover.
-- **`unionlocksmiths.sg` auto-renew is OFF, due 26 Sep 2026.** After step 5 the
-  redirects live on that zone. If it lapses, every 301 dies and the domain goes
-  to whoever wants it. Renew for two years **before** cutover.
+- ~~**`unionlocksmiths.sg` auto-renew is OFF, due 26 Sep 2026.**~~ Auto-renew
+  **enabled 02 Aug 2026** by Martin. Residual risk: auto-renew is a standing
+  instruction, not a completed renewal - it still fails silently if the card on
+  file expires or the registrar cannot charge it. Since the redirects live on
+  this zone after step 5, and a lapse kills every 301 and releases the domain,
+  an explicit multi-year renewal now is stronger than relying on the toggle
+  firing correctly on 26 Sep. Confirm the payment method is current either way.
 - **The logo PNG is still the old Union artwork** under a new filename. See
   "Still open with Kenneth" above.
 - **Phone number** still unresolved. See §4.
