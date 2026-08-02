@@ -140,8 +140,15 @@ Goal, in Kenneth's words: everything moves to `wahluenlocksmiths.sg`, and
 | Domain | Resolves to | Reading |
 |---|---|---|
 | `unionlocksmiths.sg` | `185.199.108-111.153` | GitHub Pages apex IPs, **direct, not proxied** |
-| `wahluenlocksmiths.sg` | `103.11.189.189` | Registered, but not GitHub Pages |
+| `wahluenlocksmiths.sg` | `103.11.189.189` | Registered at **Vodien**, on Vodien shared hosting |
 | `wahluen.sg` | *no answer* | No DNS records; may not be registered |
+
+`wahluenlocksmiths.sg` is **not** on Cloudflare. Its nameservers are
+`ns1/ns2.vodien.com`. Those nameservers happen to answer from Cloudflare IP
+space (`162.159.x`, `2400:cb00:`) because Vodien runs its DNS on Cloudflare's
+platform - that is Vodien's arrangement, not an account you control, and it
+gives you **no** access to Redirect Rules on this zone. Do not mistake it for
+the domain already being "on Cloudflare".
 
 Re-check these before starting; they may have moved.
 
@@ -150,9 +157,10 @@ Re-check these before starting; they may have moved.
 **Cloudflare Redirect Rules only fire on proxied traffic.** They run at
 Cloudflare's edge. A DNS-only (grey cloud) record means Cloudflare answers the
 lookup and traffic goes straight to origin, so no rule ever executes.
-`unionlocksmiths.sg` currently returns GitHub's real IPs, so it is either not on
-Cloudflare or is grey-clouded. Either way the §1 rule would not fire today, and
-the "rollback is a single toggle" advantage does not exist until it is proxied.
+**Confirmed 02 Aug 2026:** `unionlocksmiths.sg` is on Cloudflare with Full DNS
+setup, but every record is grey cloud - which is why it returns GitHub's real
+IPs. The §1 rule would not have fired. Fix is a per-record toggle, not a
+migration. See step 5.
 
 **A GitHub Pages site answers for exactly one custom domain** - whatever is in
 `CNAME`. Once that file says `wahluenlocksmiths.sg`, Pages no longer recognises
@@ -164,6 +172,39 @@ So `unionlocksmiths.sg` must stop pointing at GitHub in the same change that
 starts pointing it at something that redirects. Do not merge to `main` before
 step 5 is staged and ready to enable.
 
+## The unavoidable window, and how small it can be
+
+A Pages site cannot serve both domains at once, so there is no arrangement where
+the old domain keeps working right up until the new one is fully live. There are
+two gaps. Plan for them rather than being surprised:
+
+**Gap 1: old URLs dark.** Between the merge (step 2) and enabling the redirect
+(step 5), `unionlocksmiths.sg` returns a GitHub 404. If the rule is pre-created
+and disabled, and the proxy toggle is ready, this is **under two minutes**.
+Staging step 5 in advance is what makes it two minutes instead of twenty.
+
+**Gap 2: new domain without HTTPS.** GitHub issues the certificate for
+`wahluenlocksmiths.sg` only once `CNAME` names it - which is the merge itself.
+Issuance takes minutes to about an hour. During that time the redirect is
+sending people to an `https://` URL that has no valid certificate yet, so they
+get a browser warning. This is the worse of the two gaps.
+
+Two ways to close gap 2, pick one:
+
+- **Wait it out.** Merge at a genuinely quiet hour, watch Pages settings until
+  the certificate issues and *Enforce HTTPS* unlocks, and only then enable the
+  redirect. Old URLs 404 for that whole period, so gap 1 grows to match. Simple,
+  no extra moving parts, and for a seven-page site with low direct traffic this
+  is usually the right trade.
+- **Proxy the new domain too.** Put `wahluenlocksmiths.sg` on Cloudflare orange
+  cloud with SSL mode **Full**. Cloudflare's Universal SSL terminates TLS at the
+  edge immediately, so HTTPS works from the first request regardless of GitHub's
+  certificate. Closes gap 2 to nothing. Cost: Cloudflare is now permanently in
+  the path, and you cannot use Full (strict) until GitHub's origin certificate
+  exists.
+
+Do not merge on a Friday.
+
 ## Steps
 
 Do not reorder. A day or two ahead, drop TTLs on all three zones to 300s so a
@@ -171,16 +212,58 @@ mistake is minutes to undo rather than hours.
 
 ### 1. Point wahluenlocksmiths.sg at GitHub Pages
 
-First find out what `103.11.189.189` is - registrar parking, or a live host
-with content on it. Do not repoint until you know what you are switching off.
+**Resolved 02 Aug 2026:** `103.11.189.189` is a **Vodien shared hosting** box.
+The zone is managed in Vodien's own DNS panel (Domain > DNS Settings), and
+carries Vodien's default hosting template:
 
-- apex `@` -> four A records: `185.199.108.153`, `185.199.109.153`,
-  `185.199.110.153`, `185.199.111.153`
-- `www` -> CNAME to `heylead-martin.github.io`
-- optional AAAA: `2606:50c0:8000::153`, `8001::153`, `8002::153`, `8003::153`
+| Sub domain | Type | Content | Keep? |
+|---|---|---|---|
+| `wahluenlocksmiths.sg` | A | `103.11.189.189` | **CHANGE** -> GitHub Pages |
+| `www` | CNAME | `wahluenlocksmiths.sg` | Keep |
+| `mail` | A | `103.11.189.189` | **KEEP - this is the mailbox** |
+| `wahluenlocksmiths.sg` | MX (prio 0) | `mail.wahluenlocksmiths.sg` | **KEEP** |
+| `*` (wildcard) | A | `103.11.189.189` | Remove, see below |
+| `ftp` | CNAME | `wahluenlocksmiths.sg` | Remove if unused |
+| `localhost` | A | `127.0.0.1` | Harmless, ignore |
 
-If this zone is on Cloudflare, set these **DNS-only / grey cloud** for now.
-See step 3.
+**The apex A record is the only web record that must change.** Replace
+`103.11.189.189` with the four GitHub Pages addresses:
+
+    185.199.108.153
+    185.199.109.153
+    185.199.110.153
+    185.199.111.153
+
+Optional AAAA: `2606:50c0:8000::153`, `8001::153`, `8002::153`, `8003::153`.
+
+If Vodien's panel will not accept four A records on one name, that is a blocker
+worth a Live Chat ticket - GitHub publishes all four for redundancy and a single
+address is a single point of failure.
+
+`www` is a CNAME to the apex, which resolves to the Pages IPs and sends
+`Host: www.wahluenlocksmiths.sg`. Pages handles that correctly, so it can stay
+as is. Pointing it at `heylead-martin.github.io` instead is equally fine.
+
+**Do not touch `mail` or the MX record.** They point at the Vodien box and are
+what will carry `admin@wahluenlocksmiths.sg`. Repointing the apex does not
+affect them, because MX resolves via the separate `mail.` A record rather than
+the apex. This is exactly the case §5a warns about in reverse - here the mail
+host is a distinct name, so the web move is safe.
+
+**Remove the wildcard `*` A record** before cutover. It sends every
+unrecognised subdomain to the Vodien box, so any typo or stale hostname lands
+on hosting rather than failing cleanly - and it will quietly mask a
+misconfigured subdomain later.
+
+**Lower the TTLs first.** Every record is at `14400` (four hours). Drop the apex
+to `300` at least a day ahead, or a mistake at cutover takes four hours to
+undo rather than five minutes.
+
+This zone is not on Cloudflare and **does not need to be** - the redirect work
+all happens on the `unionlocksmiths.sg` zone. Leaving DNS at Vodien is the lower
+risk option because the mail records stay where they are. The one thing
+Cloudflare would buy you here is closing HTTPS gap 2 (see above); decide that
+on its own merits, not by default.
 
 ### 2. Merge the rebrand branch to main
 
@@ -211,24 +294,92 @@ Verify apex and www, http and https, and no mixed content.
 test message. Set `admin@unionlocksmiths.sg` to forward for twelve months -
 enquiries will keep arriving there long after cutover.
 
+**This is unblocked now and can run in parallel with everything else.** The MX
+record already exists and already points at the Vodien hosting box, so the
+mailbox can be created today in the Vodien control panel - it does not depend on
+the web move, the merge, or the redirect. It is on the critical path for step 2,
+so start it first.
+
 ### 5. Redirect unionlocksmiths.sg
 
-Only now. The new site must already be verified and serving.
+**Confirmed 02 Aug 2026:** the zone is already on Cloudflare, DNS Setup **Full**
+(nameservers delegated), free plan, 10 records. So there is **no nameserver
+migration to do** - the only thing standing between this and a working redirect
+is that every record is set to **DNS only**. That is why the §1 rule would not
+have fired.
 
-1. Add `unionlocksmiths.sg` to Cloudflare if it is not there, and move the
-   nameservers at the registrar
-2. Set apex and `www` records to **proxied (orange cloud)**. The origin behind
-   them is irrelevant once proxied - the redirect fires at the edge before
-   origin is consulted - but records must exist for the rule to attach to
-3. Remove the GitHub Pages A records, or the domain keeps trying to reach a
-   Pages site that no longer answers for it
-4. Rules > Redirect Rules > Create rule, exactly as §1 above:
+Current web records, all grey cloud:
+
+| Name | Type | Content |
+|---|---|---|
+| `unionlocksmiths.sg` | A x4 | `185.199.108-111.153` (GitHub Pages) |
+| `www` | CNAME | `heylead-martin.github.io` |
+
+1. **Create the Redirect Rule first, disabled.** Rules > Redirect Rules, exactly
+   as §1 above:
    - expression `(http.host eq "unionlocksmiths.sg") or (http.host eq "www.unionlocksmiths.sg")`
    - dynamic target `concat("https://wahluenlocksmiths.sg", http.request.uri.path)`
    - **301**, preserve query string **on**
 
-One rule covers all seven pages and every asset, because the paths are
-identical on both domains.
+   Staging it in advance means the switch in step 2 is two clicks, not two
+   minutes of typing while the old URLs are dark.
+
+2. **Then flip apex and `www` to Proxied (orange cloud)** and enable the rule.
+   Once proxied, the rule fires at Cloudflare's edge before origin is consulted,
+   so the GitHub Pages IPs behind the records become irrelevant.
+
+**Leave the A records in place.** Do not delete them. They are harmless behind a
+proxied record with a redirect rule in front, and keeping them means rollback is
+"grey-cloud the records, disable the rule" rather than retyping four A records
+from memory under pressure.
+
+One rule covers all seven pages and every asset, because the paths are identical
+on both domains.
+
+### 5a. Do not touch the email records on this zone
+
+The zone carries `_dmarc` (`v=DMARC1; p=reject`) and a `*._domainkey` DKIM
+record, plus three more records below the fold in the console - almost certainly
+MX and SPF. These are what make `admin@unionlocksmiths.sg` work, and §3 requires
+that address to keep receiving for twelve months after cutover.
+
+Proxying is an HTTP-layer feature and applies only to A, AAAA and CNAME records.
+**MX and TXT records are unaffected by the orange cloud**, so step 5 does not put
+mail at risk. But:
+
+- Confirm the three hidden records before changing anything. If any MX points at
+  the **apex hostname** rather than a mail provider's hostname, proxying the apex
+  *would* break delivery. Uncommon, worth thirty seconds to rule out.
+- **Do not delete this zone** after cutover. It holds both the redirects and the
+  mail routing.
+
+### 5b. Replicate the email security records on the new domain
+
+Not previously listed anywhere, and **confirmed as a real gap** on 02 Aug 2026.
+
+`unionlocksmiths.sg` has DMARC at `p=reject` plus a DKIM record.
+`wahluenlocksmiths.sg` has **no SPF, no DKIM and no DMARC at all** - its Vodien
+zone contains only the default A/CNAME/MX template.
+
+That means the new domain is trivially spoofable, and outbound mail from it is
+likely to land in spam from day one. A brand-new domain has no sending
+reputation, so it is treated with suspicion by default; missing auth records
+turn that suspicion into outright filtering. The business is about to publish
+this address on all seven pages of a site whose entire purpose is inbound
+enquiries.
+
+Add to the Vodien zone as part of step 4:
+
+- **SPF** - a TXT record authorising the Vodien mail host to send. Vodien
+  support will give the correct value for the hosting plan; do not guess it.
+- **DKIM** - enable signing in the Vodien mail panel, then publish the key it
+  generates.
+- **DMARC** - a `_dmarc` TXT record. Start at `p=none` with a reporting address
+  so you can see what is actually sending, then tighten to `p=reject` to match
+  the old domain once the reports are clean. Going straight to `p=reject` on an
+  unproven config risks silently dropping legitimate mail.
+
+Do this before the address goes live, not after the first lost enquiry.
 
 ### 6. Redirect wahluen.sg
 
