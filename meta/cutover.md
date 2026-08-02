@@ -294,11 +294,37 @@ Verify apex and www, http and https, and no mixed content.
 test message. Set `admin@unionlocksmiths.sg` to forward for twelve months -
 enquiries will keep arriving there long after cutover.
 
-**This is unblocked now and can run in parallel with everything else.** The MX
-record already exists and already points at the Vodien hosting box, so the
-mailbox can be created today in the Vodien control panel - it does not depend on
-the web move, the merge, or the redirect. It is on the critical path for step 2,
-so start it first.
+**DEFERRED 02 Aug 2026 by Martin.** Domain and content move goes first; the
+mailbox is picked up after.
+
+Correcting an earlier note in this file: the existing MX pointing at
+`mail.wahluenlocksmiths.sg` -> `103.11.189.189` is Vodien's **default zone
+template**, not evidence of a provisioned mail service. The Vodien account shows
+only domain registrations and domain addons - no Web Hosting, Titan Email or
+Microsoft 365 product. So there is most likely **no mailbox behind that MX
+today**, and buying a product is a prerequisite, not a five-minute task.
+
+Which product also determines the MX and SPF values:
+
+| Mailbox location | MX |
+|---|---|
+| Vodien Web Hosting | leave as-is, `mail.wahluenlocksmiths.sg` |
+| Titan Email | change to Titan's MX hosts |
+| Microsoft 365 | change to `<tenant>.mail.protection.outlook.com` |
+
+**Consequence for launch, and it needs a decision before the merge.** All seven
+pages now read `admin@wahluenlocksmiths.sg`. If the site goes live before that
+mailbox exists, every email CTA on the site bounces - on a site whose entire
+purpose is inbound enquiries. Two options:
+
+1. **Point the site's email links back at `admin@unionlocksmiths.sg`** until the
+   new mailbox is live, then swap. That address works today. Costs a small brand
+   inconsistency on an otherwise-rebranded site; loses no enquiries. **Recommended.**
+2. **Launch with the new address dead.** Enquiries emailed during the gap are
+   lost silently - the sender gets a bounce, the business never sees it.
+
+Phone CTAs are unaffected either way and are the primary conversion path on
+every page.
 
 ### 5. Redirect unionlocksmiths.sg
 
